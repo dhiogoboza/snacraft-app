@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -16,6 +17,7 @@ import android.webkit.WebView;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -26,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private WebView mWebView;
     private AdView mAdView;
 
+    private InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,20 +44,30 @@ public class MainActivity extends AppCompatActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
+
+        // =================== ADS =================
         mAdView = (AdView) findViewById(R.id.main_ad_view);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
-
-        mAdView.loadAd(adRequest);
         mAdView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
+                Log.d("ADS", "loaded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 mAdView.setVisibility(View.VISIBLE);
             }
         });
+        mAdView.loadAd(adRequest);
+
+        mInterstitialAd = new InterstitialAd(this);
+        adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        mInterstitialAd.setAdUnitId(getString(R.string.ad_mod_interstitial_id));
+        mInterstitialAd.loadAd(adRequest);
 
 
+        // ================ WEBVIEW ===============
         mWebView = (WebView) findViewById(R.id.main_webview);
 
         WebSettings webSettings = mWebView.getSettings();
@@ -74,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     public class WebViewJavaScriptInterface{
 
         private Context context;
+        private boolean mMustShow = true;
 
         /*
          * Need a reference to the context in order to sent a post message
@@ -102,6 +116,15 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     mAdView.setVisibility(View.VISIBLE);
+                    if (mMustShow) {
+                        if (mInterstitialAd.isLoaded()) {
+                            mInterstitialAd.show();
+                        }
+
+                        mMustShow = false;
+                    } else {
+                        mMustShow = true;
+                    }
                 }
             });
         }

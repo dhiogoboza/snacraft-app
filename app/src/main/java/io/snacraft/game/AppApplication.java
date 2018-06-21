@@ -1,6 +1,7 @@
 package io.snacraft.game;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.google.android.gms.ads.MobileAds;
 
@@ -16,6 +17,7 @@ public class AppApplication extends Application {
 
         // initialize mobile ads
         MobileAds.initialize(getApplicationContext(), getResources().getString(R.string.ad_mob_id));
+        Log.d("ADS", "application!!!!!!!!!!!!!!!!!!!!!!!!");
 
     }
 }
