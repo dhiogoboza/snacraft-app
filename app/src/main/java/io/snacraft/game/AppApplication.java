@@ -17,7 +17,5 @@ public class AppApplication extends Application {
 
         // initialize mobile ads
         MobileAds.initialize(getApplicationContext(), getResources().getString(R.string.ad_mob_id));
-        Log.d("ADS", "application!!!!!!!!!!!!!!!!!!!!!!!!");
-
     }
 }
