@@ -52,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAdView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
-                Log.d("ADS", "loaded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 mAdView.setVisibility(View.VISIBLE);
             }
         });
@@ -80,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mWebView.addJavascriptInterface(new WebViewJavaScriptInterface(this), "app");
         mWebView.setOnClickListener(this);
-        mWebView.loadUrl("http://snacraft.io");
+        mWebView.loadUrl("http://classic-snakeio.appspot.com/");
 
         hideSystemUI();
     }
