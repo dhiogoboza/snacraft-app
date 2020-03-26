@@ -1,10 +1,12 @@
 package io.snacraft.game;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -18,18 +20,64 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG = "MainActivity";
 
     private WebView mWebView;
     private AdView mAdView;
 
     private InterstitialAd mInterstitialAd;
 
+    private HideSystemUITask mHideSystemUITask = null;
+
+    private static class HideSystemUITask extends AsyncTask<Void, Void, Void> {
+        private WeakReference<MainActivity> activityWeakReference;
+
+        HideSystemUITask(MainActivity activity) {
+            this.activityWeakReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Sleeping", e);
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void params) {
+            super.onPostExecute(params);
+            if (activityWeakReference.get() == null) {
+                return;
+            }
+
+            if (this.activityWeakReference.get().hasWindowFocus()) {
+                this.activityWeakReference.get().hideSystemUI();
+            } else {
+                this.activityWeakReference.get().showSystemUI();
+            }
+
+            this.activityWeakReference.get().mHideSystemUITask = null;
+        }
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled", "SourceLockedOrientationActivity"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,9 +93,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         // =================== ADS =================
-        mAdView = (AdView) findViewById(R.id.main_ad_view);
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+
+        List<String> testDevices = new ArrayList<>();
+        testDevices.add(AdRequest.DEVICE_ID_EMULATOR);
+        testDevices.add("47235288A6F3161D9D7EBD3600F1E98E");
+
+        RequestConfiguration requestConfiguration
+                = new RequestConfiguration.Builder()
+                .setTestDeviceIds(testDevices)
+                .build();
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
+        mAdView = findViewById(R.id.main_ad_view);
         AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
         mAdView.setAdListener(new AdListener() {
             @Override
@@ -58,15 +121,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAdView.loadAd(adRequest);
 
         mInterstitialAd = new InterstitialAd(this);
-        adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
         mInterstitialAd.setAdUnitId(getString(R.string.ad_mod_interstitial_id));
-        mInterstitialAd.loadAd(adRequest);
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
 
         // ================ WEBVIEW ===============
-        mWebView = (WebView) findViewById(R.id.main_webview);
+        mWebView = findViewById(R.id.main_webview);
 
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -77,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         webSettings.setNeedInitialFocus(true);
         webSettings.setUserAgentString("snacraft-app");
 
-        mWebView.addJavascriptInterface(new WebViewJavaScriptInterface(this), "app");
+        mWebView.addJavascriptInterface(new WebViewJavaScriptInterface(), "app");
         mWebView.setOnClickListener(this);
         mWebView.loadUrl("http://classic-snakeio.appspot.com/");
 
@@ -89,16 +149,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         hideSystemUI();
     }
 
-    public class WebViewJavaScriptInterface{
+    public class WebViewJavaScriptInterface {
 
-        private Context context;
         private boolean mMustShow = true;
 
         /*
          * Need a reference to the context in order to sent a post message
          */
-        public WebViewJavaScriptInterface(Context context){
-            this.context = context;
+        WebViewJavaScriptInterface(){
+
         }
 
         /*
@@ -166,10 +225,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            hideSystemUI();
-        } else {
-            showSystemUI();
+
+        if (mHideSystemUITask == null) {
+            mHideSystemUITask = new HideSystemUITask(this);
+            mHideSystemUITask.execute();
         }
     }
 

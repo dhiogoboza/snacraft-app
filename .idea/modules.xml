@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Snacraft.iml" filepath="$PROJECT_DIR$/Snacraft.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/snake-canvas-app.iml" filepath="$PROJECT_DIR$/snake-canvas-app.iml" group="snake-canvas-app" />
+      <module fileurl="file://$PROJECT_DIR$/app/snake-canvas-app-app.iml" filepath="$PROJECT_DIR$/app/snake-canvas-app-app.iml" group="snake-canvas-app/app" />
     </modules>
   </component>
 </project>
